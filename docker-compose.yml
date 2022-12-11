@@ -15,6 +15,8 @@ services:
     command:
       # Enable the dashboard
       - "--api.dashboard=true"
+      # Enable ping health check
+      - "--ping=true"
       # Setup the docker provider
       - "--providers.docker=true"
       - "--providers.docker.exposedByDefault=false"
@@ -24,6 +26,8 @@ services:
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--entryPoints.websecure.address=:443"
+      # Create traefik entrypoint
+      - "--entryPoints.traefik.address=:8080"
       # Setup letsencrypt certificateresolver
       - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.caserver=${LETSENCRYPT_ACME_CASERVER:-https://acme-v02.api.letsencrypt.org/directory}"
@@ -45,6 +49,8 @@ services:
       - "ionos_api_key"
     environment:
       - "IONOS_API_KEY_FILE=/run/secrets/ionos_api_key"
+    healthcheck:
+      test: [ "CMD", "traefik", "healthcheck", "--ping" ]
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik-dashboard.rule=Host(`${DASHBOARD_HOST}`)"
