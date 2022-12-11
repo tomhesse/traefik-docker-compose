@@ -50,3 +50,5 @@ services:
       - "traefik.http.routers.traefik-dashboard.rule=Host(`${DASHBOARD_HOST}`)"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
       - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${DASHBOARD_USERS}"
