@@ -3,6 +3,9 @@ version: "3"
 networks:
   proxy-network:
     external: true
+secrets:
+  ionos_api_key:
+    file: "./secrets/ionos_api_key"
 
 services:
   traefik:
@@ -16,9 +19,17 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedByDefault=false"
       - "--providers.docker.network=proxy-network"
-      # Create http and https entrypoints
+      # Create http and https entrypoints and redirect http to https
       - "--entryPoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--entryPoints.websecure.address=:443"
+      # Setup letsencrypt certificateresolver
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.caserver=${LETSENCRYPT_ACME_CASERVER:-https://acme-v02.api.letsencrypt.org/directory}"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=ionos"
+      - "--certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
     ports:
       # Expose http and https port
       - "80:80"
@@ -28,7 +39,14 @@ services:
     volumes:
       # Mount the docker socket read-only
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      # File for ssl certificates
+      - "/srv/traefik/acme.json:/acme.json"
+    secrets:
+      - "ionos_api_key"
+    environment:
+      - "IONOS_API_KEY_FILE=/run/secrets/ionos_api_key"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik-dashboard.rule=Host(`${DASHBOARD_HOST}`)"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
