@@ -1,2 +1,4 @@
 # Ignore secrets directory
 secrets/
+# Ignore environment variable file
+.env*
